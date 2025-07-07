@@ -32,22 +32,6 @@
       })
       .addTo(map);
 
-    // Tropper direkte indsat på kortet
-    const tropperDirekte = [
-      { navn: "Fortrop", farve: "blue", coords: [55.155, 10.150] },
-      { navn: "Mellemtrop", farve: "green", coords: [55.154, 10.148] },
-      { navn: "Bagtrop", farve: "red", coords: [55.152649, 10.145605] }
-    ];
-
-    tropperDirekte.forEach(trop => {
-      L.circleMarker(trop.coords, {
-        radius: 8,
-        color: trop.farve,
-        fillColor: trop.farve,
-        fillOpacity: 0.8
-      }).bindPopup(`<b>🦊 ${trop.navn}</b>`).addTo(map);
-    });
-
     // Checkpoints med emojis
     const checkpoints = [
       {
