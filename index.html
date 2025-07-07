@@ -32,6 +32,33 @@
       })
       .addTo(map);
 
+    // Hent trop-positioner fra Google Sheets JSON
+    function hentTropper() {
+      fetch('https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec')
+        .then(response => response.json())
+        .then(data => {
+          data.forEach(trop => {
+            const coords = [parseFloat(trop.Latitude), parseFloat(trop.Longitude)];
+            L.circleMarker(coords, {
+              radius: 8,
+              color: trop.Farve || 'black',
+              fillColor: trop.Farve || 'black',
+              fillOpacity: 0.8
+            })
+              .bindPopup(`<b>🦊 ${trop.Trop}</b>`) 
+              .addTo(map);
+          });
+        });
+    }
+
+    hentTropper();
+    setInterval(() => {
+      map.eachLayer(layer => {
+        if (layer instanceof L.CircleMarker) map.removeLayer(layer);
+      });
+      hentTropper();
+    }, 30000); // opdater hvert 30. sekund
+
     // Checkpoints med emojis
     const checkpoints = [
       {
