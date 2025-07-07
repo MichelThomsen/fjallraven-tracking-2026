@@ -57,6 +57,18 @@
       attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
+    // Distance mellem Falsled Havn og Holstenshus
+    const falsled = [55.124253, 10.158095];
+    const holstenshus = [55.182537, 10.208137];
+    const line = L.polyline([falsled, holstenshus], { color: 'orange', weight: 4 }).addTo(map);
+    function toRad(x) { return x * Math.PI / 180; }
+    const dLat = toRad(holstenshus[0] - falsled[0]);
+    const dLon = toRad(holstenshus[1] - falsled[1]);
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(toRad(falsled[0])) * Math.cos(toRad(holstenshus[0])) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const dist = 6371 * c; // km
+    line.bindPopup(`Distance Falsled Havn - Holstenshus: ${dist.toFixed(2)} km`).openPopup();
+
     omnivore.kml('Fjallraven_Classic_Danmark_2026.kml')
       .on('ready', function() {
         map.fitBounds(this.getBounds());
@@ -73,8 +85,12 @@
 
     // Vis generelle checkpoints som lag
     Object.values(ruteLogik).forEach(r => {
-      L.marker(r.cp.coords).addTo(map);
-      L.marker(r.mål.coords).addTo(map);
+      L.marker(r.cp.coords)
+        .bindPopup(`<b>${r.cp.navn}</b>`)
+        .addTo(map);
+      L.marker(r.mål.coords)
+        .bindPopup(`<b>${r.mål.navn}</b>`)
+        .addTo(map);
     });
 
     function startTracking() {
@@ -116,7 +132,7 @@
           const etaCp = gnsHast>0 ? distCp/gnsHast/60 : 'ukendt';
           const etaMål = gnsHast>0 ? distMål/gnsHast/60 : 'ukendt';
 
-          let popup = `<b>🦊 ${navn} (${trop})</b><br>Start: ${startpunkt}`;
+          let popup = `<b>🦊 ${navn} (${trop})</b><br>Start: ${startpunkt}<br>Distance til ${valg.cp.navn}: ${(distCp/1000).toFixed(1)} km`;
           if (trop!=='Fortrop') popup += `<br>ETA til ${valg.cp.navn}: ${etaCp.toFixed?etaCp.toFixed(1):etaCp} min`;
           if (trop!=='Fortrop') popup += `<br>ETA til ${valg.mål.navn}: ${etaMål.toFixed?etaMål.toFixed(1):etaMål} min`;
           if (trop==='Bagtrop') popup += `<br>Gns. hastighed: ${(gnsHast*3.6).toFixed(1)} km/t`;
