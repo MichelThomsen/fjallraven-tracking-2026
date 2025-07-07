@@ -54,17 +54,17 @@
     const checkpoints = [
       {
         navn: "Checkpoint 1 – Østrup 28",
-        emoji: "🍗",
+        emoji: "🍗", // frikadelle = drumstick emoji
         coords: [55.167784, 10.234855]
       },
       {
         navn: "Checkpoint 2 – Syltemae Camping",
-        emoji: "🏕️",
+        emoji: "🎕", // campingvogn = caravan emoji
         coords: [55.041432, 10.458965]
       },
       {
         navn: "Checkpoint 4 – Svendborgsundbroen",
-        emoji: "🛣️",
+        emoji: "🛣️", // bro = bridge emoji
         coords: [55.048875, 10.599355]
       }
     ];
@@ -73,6 +73,25 @@
       L.marker(cp.coords)
         .bindPopup(`<b>${cp.emoji} ${cp.navn}</b>`) 
         .addTo(map);
+    });
+
+    // Startpunkt tropper (vises ved Checkpoint 1)
+    const startCoords = [55.167784, 10.234855];
+    const tropperStart = [
+      { navn: "Fortrop", farve: "blue" },
+      { navn: "Mellemtrop", farve: "green" },
+      { navn: "Bagtrop", farve: "red" }
+    ];
+
+    tropperStart.forEach(trop => {
+      L.circleMarker(startCoords, {
+        radius: 6,
+        color: trop.farve,
+        fillColor: trop.farve,
+        fillOpacity: 0.6
+      })
+      .bindPopup(`<b>${trop.navn} (Start)</b>`) 
+      .addTo(map);
     });
 
   </script>
