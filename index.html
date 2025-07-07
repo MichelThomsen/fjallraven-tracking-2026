@@ -46,7 +46,7 @@
             color: trop.farve,
             fillColor: trop.farve,
             fillOpacity: 0.8
-          }).bindPopup(`<b>${trop.navn}</b><br>ETA: ${etaStr}`).addTo(map);
+          }).bindPopup(`<b>🦊 ${trop.navn}</b><br>ETA: ${etaStr}`).addTo(map);
         });
       });
 
@@ -54,17 +54,17 @@
     const checkpoints = [
       {
         navn: "Checkpoint 1 – Østrup 28",
-        emoji: "🍗", // frikadelle = drumstick emoji
+        emoji: "🍗",
         coords: [55.167784, 10.234855]
       },
       {
         navn: "Checkpoint 2 – Syltemae Camping",
-        emoji: "🎕", // campingvogn = caravan emoji
+        emoji: "🎕",
         coords: [55.041432, 10.458965]
       },
       {
         navn: "Checkpoint 4 – Svendborgsundbroen",
-        emoji: "🛣️", // bro = bridge emoji
+        emoji: "🛣️",
         coords: [55.048875, 10.599355]
       }
     ];
@@ -75,8 +75,8 @@
         .addTo(map);
     });
 
-    // Startpunkt tropper (vises ved Checkpoint 1)
-    const startCoords = [55.167784, 10.234855];
+    // Startpunkt tropper (opdateret koordinat)
+    const startCoords = [55.152649, 10.145605];
     const tropperStart = [
       { navn: "Fortrop", farve: "blue" },
       { navn: "Mellemtrop", farve: "green" },
@@ -90,7 +90,7 @@
         fillColor: trop.farve,
         fillOpacity: 0.6
       })
-      .bindPopup(`<b>${trop.navn} (Start)</b>`) 
+      .bindPopup(`<b>🦊 ${trop.navn} (Start)</b>`) 
       .addTo(map);
     });
 
