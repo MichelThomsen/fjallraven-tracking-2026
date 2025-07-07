@@ -49,6 +49,32 @@
           }).bindPopup(`<b>${trop.navn}</b><br>ETA: ${etaStr}`).addTo(map);
         });
       });
+
+    // Checkpoints med emojis
+    const checkpoints = [
+      {
+        navn: "Checkpoint 1 – Østrup 28",
+        emoji: "🍗",
+        coords: [55.167784, 10.234855]
+      },
+      {
+        navn: "Checkpoint 2 – Syltemae Camping",
+        emoji: "🏕️",
+        coords: [55.041432, 10.458965]
+      },
+      {
+        navn: "Checkpoint 4 – Svendborgsundbroen",
+        emoji: "🛣️",
+        coords: [55.048875, 10.599355]
+      }
+    ];
+
+    checkpoints.forEach(cp => {
+      L.marker(cp.coords)
+        .bindPopup(`<b>${cp.emoji} ${cp.navn}</b>`) 
+        .addTo(map);
+    });
+
   </script>
 </body>
 </html>
