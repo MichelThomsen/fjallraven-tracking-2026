@@ -55,30 +55,6 @@
       })
       .addTo(map);
 
-    function hentTropper() {
-      fetch('https://script.google.com/macros/s/AKfycbwVfyZJseH1nQvgD4raByHrK0veWUHxQoa-XykeybuH1B80rJrQyoBKmJXudwVZu4Z7/exec')
-        .then(response => response.json())
-        .then(data => {
-          data.forEach(trop => {
-            const coords = [parseFloat(trop.Latitude), parseFloat(trop.Longitude)];
-            L.circleMarker(coords, {
-              radius: 8,
-              color: trop.Farve || 'black',
-              fillColor: trop.Farve || 'black',
-              fillOpacity: 0.8
-            }).bindPopup(`<b>🦊 ${trop.Trop}</b>`).addTo(map);
-          });
-        });
-    }
-
-    hentTropper();
-    setInterval(() => {
-      map.eachLayer(layer => {
-        if (layer instanceof L.CircleMarker) map.removeLayer(layer);
-      });
-      hentTropper();
-    }, 30000);
-
     const tropFarver = {
       Fortrop: 'blue',
       Mellemtrop: 'green',
