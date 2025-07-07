@@ -59,6 +59,26 @@
       hentTropper();
     }, 30000); // opdater hvert 30. sekund
 
+    // Live markør for brugeren selv
+    let brugerMarkor;
+    function opdaterMinLokation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          if (brugerMarkor) map.removeLayer(brugerMarkor);
+          brugerMarkor = L.circleMarker([lat, lon], {
+            radius: 8,
+            color: 'purple',
+            fillColor: 'purple',
+            fillOpacity: 0.9
+          }).bindPopup("<b>🧭 Din position</b>").addTo(map);
+        });
+      }
+    }
+    opdaterMinLokation();
+    setInterval(opdaterMinLokation, 10000); // opdater hvert 10. sekund
+
     // Checkpoints med emojis
     const checkpoints = [
       {
