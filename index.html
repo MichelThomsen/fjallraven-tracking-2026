@@ -63,101 +63,72 @@
       })
       .addTo(map);
 
-    const tropFarver = {
-      Fortrop: 'blue',
-      Mellemtrop: 'green',
-      Bagtrop: 'red'
+    const tropFarver = { Fortrop: 'blue', Mellemtrop: 'green', Bagtrop: 'red' };
+
+    const ruteLogik = {
+      'Falsled Havn': { cp: { navn: 'Checkpoint 1 – Østrup 28', coords: [55.167784, 10.234855] }, mål: { navn: 'Holstenshus', coords: [55.182537, 10.208137] } },
+      'Holstenshus': { cp: { navn: 'Checkpoint 2 – Syltemae Camping', coords: [55.041432, 10.458965] }, mål: { navn: 'Gorilla Park', coords: [55.0980806, 10.4808105] } },
+      'Gorilla Park': { cp: { navn: 'Checkpoint 4 – Svendborgsundbroen', coords: [55.048875, 10.599355] }, mål: { navn: 'Bjørnemose Gods', coords: [55.059598, 10.6588385] } }
     };
 
-    const checkpoints = [
-      { navn: "Checkpoint 1 – Østrup 28", emoji: "🍗", coords: [55.167784, 10.234855] },
-      { navn: "Checkpoint 2 – Syltemae Camping", emoji: "🎕", coords: [55.041432, 10.458965] },
-      { navn: "Checkpoint 4 – Svendborgsundbroen", emoji: "🛣️", coords: [55.048875, 10.599355] }
-    ];
-
-    checkpoints.forEach(cp => {
-      L.marker(cp.coords)
-        .bindPopup(`<b>${cp.emoji} ${cp.navn}</b>`)
-        .addTo(map);
+    // Vis generelle checkpoints som lag
+    Object.values(ruteLogik).forEach(r => {
+      L.marker(r.cp.coords).addTo(map);
+      L.marker(r.mål.coords).addTo(map);
     });
 
-    let brugerMarkor;
     function startTracking() {
-      let tidligerePosition = null;
+      let tidligerePos = null;
       let startTid = Date.now();
       const navn = document.getElementById('navn').value.trim();
       const trop = document.getElementById('trop').value;
       const startpunkt = document.getElementById('startpunkt').value;
-      const startpunkter = {
-        'Falsled Havn': [55.124253, 10.158095],
-        'Holstenshus': [55.182537, 10.208137],
-        'Gorilla Park': [55.193888, 10.229635]
-      };
-      const startKoord = startpunkter[startpunkt];
       if (!navn) return alert('Indtast dit navn.');
       document.getElementById('user-form').style.display = 'none';
+      const valg = ruteLogik[startpunkt];
 
+      let brugerMarkor;
       function opdaterMinLokation() {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(pos => {
-            const nu = Date.now();
-            const lat = pos.coords.latitude;
-            const lon = pos.coords.longitude;
+        navigator.geolocation.getCurrentPosition(pos => {
+          const nu = Date.now();
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
 
-            let distance = 0;
-            if (tidligerePosition) {
-              const R = 6371e3;
-              const φ1 = tidligerePosition.lat * Math.PI / 180;
-              const φ2 = lat * Math.PI / 180;
-              const Δφ = (lat - tidligerePosition.lat) * Math.PI / 180;
-              const Δλ = (lon - tidligerePosition.lon) * Math.PI / 180;
-              const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                        Math.cos(φ1) * Math.cos(φ2) *
-                        Math.sin(Δλ/2) * Math.sin(Δλ/2);
-              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-              distance = R * c;
-            }
-            tidligerePosition = { lat, lon };
+          // Beregn gennemsnitshastighed
+          let distance = 0;
+          if (tidligerePos) {
+            const R = 6371e3;
+            const φ1 = tidligerePos.lat * Math.PI/180;
+            const φ2 = lat * Math.PI/180;
+            const Δφ = (lat - tidligerePos.lat) * Math.PI/180;
+            const Δλ = (lon - tidligerePos.lon) * Math.PI/180;
+            const a = Math.sin(Δφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            distance = R * c;
+          }
+          tidligerePos = { lat, lon };
+          const tidSek = (nu - startTid)/1000;
+          const gnsHast = distance>0 ? distance/tidSek : 0;
 
-            const tidSekunder = (nu - startTid) / 1000;
-            const gennemsnitshastighed = distance > 0 ? (distance / tidSekunder) : 0;
+          // Beregn ETA
+          const distCp = Math.hypot(valg.cp.coords[0]-lat, valg.cp.coords[1]-lon)*111320;
+          const distMål = Math.hypot(valg.mål.coords[0]-lat, valg.mål.coords[1]-lon)*111320;
+          const etaCp = gnsHast>0 ? distCp/gnsHast/60 : 'ukendt';
+          const etaMål = gnsHast>0 ? distMål/gnsHast/60 : 'ukendt';
 
-            let nærmeste = checkpoints[0];
-            let minAfstand = Infinity;
-            checkpoints.forEach(cp => {
-              const dLat = cp.coords[0] - lat;
-              const dLon = cp.coords[1] - lon;
-              const d = Math.sqrt(dLat*dLat + dLon*dLon);
-              if (d < minAfstand) {
-                nærmeste = cp;
-                minAfstand = d;
-              }
-            });
+          let popup = `<b>🦊 ${navn} (${trop})</b><br>Start: ${startpunkt}`;
+          if (trop!=='Fortrop') popup += `<br>ETA til ${valg.cp.navn}: ${etaCp.toFixed?etaCp.toFixed(1):etaCp} min`;
+          if (trop!=='Fortrop') popup += `<br>ETA til ${valg.mål.navn}: ${etaMål.toFixed?etaMål.toFixed(1):etaMål} min`;
+          if (trop==='Bagtrop') popup += `<br>Gns. hastighed: ${(gnsHast*3.6).toFixed(1)} km/t`;
 
-            const aktuelAfstand = Math.sqrt(Math.pow(nærmeste.coords[0] - lat, 2) + Math.pow(nærmeste.coords[1] - lon, 2)) * 111320;
-            const etaMinutter = gennemsnitshastighed > 0 ? (aktuelAfstand / gennemsnitshastighed) / 60 : 'ukendt';
-
-            let popupText = `<b>🦊 ${navn} (${trop})</b><br>Startpunkt: ${startpunkt}`;
-            if (trop !== 'Fortrop') {
-              popupText += `<br>ETA til ${nærmeste.navn}: ${etaMinutter.toFixed ? etaMinutter.toFixed(1) : etaMinutter} min`;
-              if (trop === 'Bagtrop') {
-                popupText += `<br>Gns. hastighed: ${(gennemsnitshastighed * 3.6).toFixed(1)} km/t`;
-              }
-            }
-
-            if (brugerMarkor) map.removeLayer(brugerMarkor);
-            brugerMarkor = L.circleMarker([lat, lon], {
-              radius: 8,
-              color: tropFarver[trop] || 'purple',
-              fillColor: tropFarver[trop] || 'purple',
-              fillOpacity: 0.9
-            }).bindPopup(popupText).openPopup().addTo(map);
-          });
-        }
+          if (brugerMarkor) map.removeLayer(brugerMarkor);
+          brugerMarkor = L.circleMarker([lat,lon], {radius:8, color:tropFarver[trop], fillColor:tropFarver[trop], fillOpacity:0.9})
+            .bindPopup(popup).openPopup().addTo(map);
+        });
       }
 
       opdaterMinLokation();
-      setInterval(opdaterMinLokation, 10000);
+      setInterval(opdaterMinLokation,10000);
     }
   </script>
 </body>
