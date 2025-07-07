@@ -32,23 +32,21 @@
       })
       .addTo(map);
 
-    // Tropper via JSON
-    fetch('tropper.json')
-      .then(response => response.json())
-      .then(data => {
-        data.forEach(trop => {
-          const etaMinutter = Math.round((trop.distance_to_goal_m / trop.estimated_speed_mps) / 60);
-          const etaTime = new Date(Date.now() + etaMinutter * 60 * 1000);
-          const etaStr = etaTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    // Tropper direkte indsat på kortet
+    const tropperDirekte = [
+      { navn: "Fortrop", farve: "blue", coords: [55.155, 10.150] },
+      { navn: "Mellemtrop", farve: "green", coords: [55.154, 10.148] },
+      { navn: "Bagtrop", farve: "red", coords: [55.152649, 10.145605] }
+    ];
 
-          L.circleMarker(trop.coords, {
-            radius: 8,
-            color: trop.farve,
-            fillColor: trop.farve,
-            fillOpacity: 0.8
-          }).bindPopup(`<b>🦊 ${trop.navn}</b><br>ETA: ${etaStr}`).addTo(map);
-        });
-      });
+    tropperDirekte.forEach(trop => {
+      L.circleMarker(trop.coords, {
+        radius: 8,
+        color: trop.farve,
+        fillColor: trop.farve,
+        fillOpacity: 0.8
+      }).bindPopup(`<b>🦊 ${trop.navn}</b>`).addTo(map);
+    });
 
     // Checkpoints med emojis
     const checkpoints = [
@@ -74,26 +72,6 @@
         .bindPopup(`<b>${cp.emoji} ${cp.navn}</b>`) 
         .addTo(map);
     });
-
-    // Startpunkt tropper (opdateret koordinat)
-    const startCoords = [55.152649, 10.145605];
-    const tropperStart = [
-      { navn: "Fortrop", farve: "blue" },
-      { navn: "Mellemtrop", farve: "green" },
-      { navn: "Bagtrop", farve: "red" }
-    ];
-
-    tropperStart.forEach(trop => {
-      L.circleMarker(startCoords, {
-        radius: 6,
-        color: trop.farve,
-        fillColor: trop.farve,
-        fillOpacity: 0.6
-      })
-      .bindPopup(`<b>🦊 ${trop.navn} (Start)</b>`) 
-      .addTo(map);
-    });
-
   </script>
 </body>
 </html>
