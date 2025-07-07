@@ -4,5 +4,161 @@
   <title>Fjällräven Tracking</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  ...
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
+
+  <style>
+    html, body, #map {
+      height: 100%;
+      margin: 0;
+      z-index: 0;
+    }
+    #user-form {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1001;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      font-family: sans-serif;
+      min-width: 250px;
+    }
+  </style>
+</head>
+<body>
+  <div id="user-form">
+    <label for="navn">Navn:</label><br>
+    <input type="text" id="navn" /><br>
+    <label for="trop">Vælg trop:</label><br>
+    <select id="trop">
+      <option value="Fortrop">Fortrop</option>
+      <option value="Mellemtrop">Mellemtrop</option>
+      <option value="Bagtrop">Bagtrop</option>
+    </select><br>
+    <label for="startpunkt">Startpunkt:</label><br>
+    <select id="startpunkt">
+      <option value="Falsled Havn">Falsled Havn</option>
+      <option value="Holstenshus">Holstenshus</option>
+      <option value="Gorilla Park">Gorilla Park</option>
+    </select><br><br>
+    <button onclick="startTracking()">Start</button>
+  </div>
+
+  <div id="map"></div>
+
+  <script>
+    var map = L.map('map').setView([56.2, 10.4], 10);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    omnivore.kml('Fjallraven_Classic_Danmark_2026.kml')
+      .on('ready', function() {
+        map.fitBounds(this.getBounds());
+      })
+      .addTo(map);
+
+    const tropFarver = {
+      Fortrop: 'blue',
+      Mellemtrop: 'green',
+      Bagtrop: 'red'
+    };
+
+    const checkpoints = [
+      { navn: "Checkpoint 1 – Østrup 28", emoji: "🍗", coords: [55.167784, 10.234855] },
+      { navn: "Checkpoint 2 – Syltemae Camping", emoji: "🎕", coords: [55.041432, 10.458965] },
+      { navn: "Checkpoint 4 – Svendborgsundbroen", emoji: "🛣️", coords: [55.048875, 10.599355] }
+    ];
+
+    checkpoints.forEach(cp => {
+      L.marker(cp.coords)
+        .bindPopup(`<b>${cp.emoji} ${cp.navn}</b>`)
+        .addTo(map);
+    });
+
+    let brugerMarkor;
+    function startTracking() {
+      let tidligerePosition = null;
+      let startTid = Date.now();
+      const navn = document.getElementById('navn').value.trim();
+      const trop = document.getElementById('trop').value;
+      const startpunkt = document.getElementById('startpunkt').value;
+      const startpunkter = {
+        'Falsled Havn': [55.124253, 10.158095],
+        'Holstenshus': [55.182537, 10.208137],
+        'Gorilla Park': [55.193888, 10.229635]
+      };
+      const startKoord = startpunkter[startpunkt];
+      if (!navn) return alert('Indtast dit navn.');
+      document.getElementById('user-form').style.display = 'none';
+
+      function opdaterMinLokation() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(pos => {
+            const nu = Date.now();
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+
+            let distance = 0;
+            if (tidligerePosition) {
+              const R = 6371e3;
+              const φ1 = tidligerePosition.lat * Math.PI / 180;
+              const φ2 = lat * Math.PI / 180;
+              const Δφ = (lat - tidligerePosition.lat) * Math.PI / 180;
+              const Δλ = (lon - tidligerePosition.lon) * Math.PI / 180;
+              const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                        Math.cos(φ1) * Math.cos(φ2) *
+                        Math.sin(Δλ/2) * Math.sin(Δλ/2);
+              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+              distance = R * c;
+            }
+            tidligerePosition = { lat, lon };
+
+            const tidSekunder = (nu - startTid) / 1000;
+            const gennemsnitshastighed = distance > 0 ? (distance / tidSekunder) : 0;
+
+            let nærmeste = checkpoints[0];
+            let minAfstand = Infinity;
+            checkpoints.forEach(cp => {
+              const dLat = cp.coords[0] - lat;
+              const dLon = cp.coords[1] - lon;
+              const d = Math.sqrt(dLat*dLat + dLon*dLon);
+              if (d < minAfstand) {
+                nærmeste = cp;
+                minAfstand = d;
+              }
+            });
+
+            const aktuelAfstand = Math.sqrt(Math.pow(nærmeste.coords[0] - lat, 2) + Math.pow(nærmeste.coords[1] - lon, 2)) * 111320;
+            const etaMinutter = gennemsnitshastighed > 0 ? (aktuelAfstand / gennemsnitshastighed) / 60 : 'ukendt';
+
+            let popupText = `<b>🦊 ${navn} (${trop})</b><br>Startpunkt: ${startpunkt}`;
+            if (trop !== 'Fortrop') {
+              popupText += `<br>ETA til ${nærmeste.navn}: ${etaMinutter.toFixed ? etaMinutter.toFixed(1) : etaMinutter} min`;
+              if (trop === 'Bagtrop') {
+                popupText += `<br>Gns. hastighed: ${(gennemsnitshastighed * 3.6).toFixed(1)} km/t`;
+              }
+            }
+
+            if (brugerMarkor) map.removeLayer(brugerMarkor);
+            brugerMarkor = L.circleMarker([lat, lon], {
+              radius: 8,
+              color: tropFarver[trop] || 'purple',
+              fillColor: tropFarver[trop] || 'purple',
+              fillOpacity: 0.9
+            }).bindPopup(popupText).openPopup().addTo(map);
+          });
+        }
+      }
+
+      opdaterMinLokation();
+      setInterval(opdaterMinLokation, 10000);
+    }
+  </script>
+</body>
 </html>
